@@ -1,0 +1,7 @@
+Approximately 506 rows that consist of clinical information about each patient + the presence of their mutations. Genes were selected based on prevalence in the TCGA glioblastoma multiforme data collection site.
+
+500 genes for each (dead) person.
+300 samples (dead persons).
+
+My (DanielJ) changes:
+- gene 1 was changes to gene ONE

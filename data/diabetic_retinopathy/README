@@ -1,0 +1,17 @@
+Subject id
+laser type: 1=xenon, 2=argon
+treated eye: 1=right 2=left
+age at diagnosis of diabetes
+type of diabetes: 1= juvenile (age at dx < 20), 2=adult
+Outcome for the treated eye:
+risk group: 6-12
+status: 0=censored, 1=blindness
+follow-up time
+Outcome for the untreated eye
+risk group: 6-12
+status: 0=censored, 1=blindness
+follow-up time
+
+Each patient had one eye randomized to laser treatment and the other eye received no treatment. For each eye, the event of interest was the time from initiation of treatment to the time when visual acuity dropped below 5/200 two visits in a row (call it "blindness"). Thus there is a built-in lag time of approximately 6 months (visits were every 3 months). Survival times in this dataset are therefore the actual time to blindness in months, minus the minimum possible time to event (6.5 months). Censoring was caused by death, dropout, or end of the study.
+
+source: mayo.edu
