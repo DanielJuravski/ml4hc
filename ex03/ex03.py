@@ -82,6 +82,8 @@ def q03(best_rf, train_x):
     for i in range(5):
         print("%d. feature %s (%f)" % (i, train_x.columns.values[indices[i]], importances[indices[i]]))
 
+    most_important_feature = train_x.columns.values[indices[0]]
+
     # # Plot the impurity-based feature importances of the forest
     # import matplotlib.pyplot as plt
     # plt.rcParams["figure.figsize"] = (14, 6)
@@ -95,6 +97,7 @@ def q03(best_rf, train_x):
     # plt.xlim([-1, train_x.shape[1]])
     # plt.show()
 
+    return most_important_feature
 
 def q04(best_rf, test_x):
     test_x = test_x[:6]
@@ -102,25 +105,82 @@ def q04(best_rf, test_x):
     warnings.filterwarnings('ignore')
 
     shap_values = shap.KernelExplainer(best_rf.predict, test_x).shap_values(test_x)
-    shap.summary_plot(shap_values, test_x)
+    # shap.summary_plot(shap_values, test_x)
 
     shap_sum = np.abs(shap_values).mean(axis=0)
     importance_df = pd.DataFrame([test_x.columns.tolist(), shap_sum.tolist()]).T
     importance_df.columns = ['column_name', 'shap_importance']
     importance_df = importance_df.sort_values('shap_importance', ascending=False)
     print(importance_df)
+    
+    return shap_values
 
 
 def q05(best_rf, test_x):
-    shap_values = shap.TreeExplainer(best_rf).shap_values(test_x)
-    shap_values = shap_values[1]  # shap values of the 1-class
-    shap.summary_plot(shap_values, test_x, plot_type="dot")
+    test_x = test_x[:6]
+    explainerModel = shap.TreeExplainer(best_rf)
+    shap_values = explainerModel.shap_values(test_x)[1]  # shap values of the 1-class
+    # shap.summary_plot(shap_values, test_x, plot_type="dot")
 
     shap_sum = np.abs(shap_values).mean(axis=0)
     importance_df = pd.DataFrame([test_x.columns.tolist(), shap_sum.tolist()]).T
     importance_df.columns = ['column_name', 'shap_importance']
     importance_df = importance_df.sort_values('shap_importance', ascending=False)
     print(importance_df)
+
+    return explainerModel, shap_values
+
+
+def q07(best_rf, test_x, explainerModel, shap_values, most_important_feature):
+    most_important_feature_idx = np.where(test_x.columns.values == most_important_feature)
+
+    sample_id = np.abs(shap_values.T[most_important_feature_idx]).argmax()
+    print("The sample that the most important feature is indeed the most important: {0}".format(sample_id))
+    print("The most important feature is: {0}".format(most_important_feature))
+
+    shap.initjs()
+    shap.force_plot(explainerModel.expected_value[1], shap_values[sample_id], test_x.iloc[[sample_id]])
+
+
+def q08(best_rf, test_x, explainerModel, shap_values, most_important_feature):
+    most_important_feature_idx = np.where(test_x.columns.values == most_important_feature)
+
+    sample_id = np.abs(shap_values.T[most_important_feature_idx]).argmin()
+    print("The sample that the most important feature is the less important: {0}".format(sample_id))
+
+    _most_important_feature = test_x.columns[shap_values[sample_id].argmax()]
+    print("The most important feature is: {0}".format(_most_important_feature))
+
+    shap.initjs()
+    shap.force_plot(explainerModel.expected_value[1], shap_values[sample_id], test_x.iloc[[sample_id]])
+
+
+def q06(test_x, kernel_shap_values, tree_shap_values):
+    kernel_shap_values_mean = np.mean(kernel_shap_values, axis=0)
+    tree_shap_values_mean = np.mean(tree_shap_values, axis=0)
+
+    import matplotlib.pyplot as plt
+
+    index = np.arange(30)
+    bar_width = 0.35
+
+    kernel_shap_values_mean = np.mean(np.abs(kernel_shap_values), axis=0)
+    tree_shap_values_mean = np.mean(np.abs(tree_shap_values), axis=0)
+    fig, ax = plt.subplots()
+    ax.bar(index, tree_shap_values_mean, bar_width, label="Tree Explainer")
+    ax.bar(index + bar_width, kernel_shap_values_mean, bar_width, label="Kernel Explainer")
+
+    ax.set_xlabel('Feature')
+    ax.set_ylabel('Shap value')
+    ax.set_title('Shap value comparison')
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(test_x.columns)
+    plt.xticks(rotation=90)
+    ax.legend()
+
+    plt.show()
+
+    pass
 
 
 if __name__ == '__main__':
@@ -128,9 +188,13 @@ if __name__ == '__main__':
     train_x, test_x, train_y, test_y = init_data(data)
 
     best_rf = q01_02(train_x, test_x, train_y, test_y)
-    q03(best_rf, train_x)
-    q04(best_rf, test_x)
-    q05(best_rf, test_x)
+    most_important_feature = q03(best_rf, train_x)
+    kernel_shap_values = q04(best_rf, test_x)
+    explainerModel, tree_shap_values = q05(best_rf, test_x)
+    q06(test_x, kernel_shap_values, tree_shap_values)
+    q07(best_rf, test_x, explainerModel, tree_shap_values, most_important_feature)
+    q08(best_rf, test_x, explainerModel, tree_shap_values, most_important_feature)
+
 
 
 
